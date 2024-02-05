@@ -101,7 +101,7 @@ class Rand():
   def simulate_workload(self) -> dict:
     for item in self.workload:
       self.get(item)
-    return {"misses": self.misses, "hits": self.hits, "hit_rate": (self.hits/(self.hits + self.misses))}
+    return {"misses": self.misses, "hits": self.hits, "hit_rate": (self.hits/(self.hits + self.misses)*100)}
 
 
 
@@ -140,9 +140,11 @@ class Opt():
     for cached_page in self.cache:
       # find the next call relative to current index.
 
-      if not cached_page in self.workload[item_index_in_ref_list:]:
+      # No access to this page going forward, we can remove
+      if cached_page not in self.workload[item_index_in_ref_list:]:
         return cached_page
 
+      # next access to this page
       distance_to_next_access = self.workload.index(cached_page, item_index_in_ref_list) - item_index_in_ref_list
       if distance_to_next_access > max_distance:
         element_to_remove = cached_page
@@ -153,7 +155,7 @@ class Opt():
   def simulate_workload(self) -> dict:
     for index, item in enumerate(self.workload):
       self.get(item, index)
-    return {"misses": self.misses, "hits": self.hits, "hit_rate": (self.hits/(self.hits + self.misses))}
+    return {"misses": self.misses, "hits": self.hits, "hit_rate": (self.hits/(self.hits + self.misses)*100)}
 
 
 def plot_results(rand_hit_rate, opt_hit_rate, cache_size):
@@ -176,17 +178,24 @@ if __name__ == "__main__":
   rand_results = []
   opt_results = []
   for size in cache_size:
-    rand_cache = Rand(page_addresses=workload.pages, cache_size=size, worworkloadkflow=workload.reference_list)
-    rand_res = rand_cache.simulate_workload()
-    
-    print(f"RANDOM cache size: {size}, results: {rand_res}")
-    
-    opt_cache = Opt(page_addresses=workload.pages, cache_size=size, worworkloadkflow=workload.reference_list)
-    opt_res = opt_cache.simulate_workload()
-    
-    print(f"OPTIMAL cache size: {size}, results: {opt_res}")
+    size_rand_results = []
+    size_opt_results = []
+    for iteration in range(10):
+      rand_cache = Rand(page_addresses=workload.pages, cache_size=size, worworkloadkflow=workload.reference_list)
+      rand_res = rand_cache.simulate_workload()
+      size_rand_results.append(rand_res["hit_rate"])
+      
+      opt_cache = Opt(page_addresses=workload.pages, cache_size=size, worworkloadkflow=workload.reference_list)
+      opt_res = opt_cache.simulate_workload()
+      size_opt_results.append(opt_res["hit_rate"])
 
-    rand_results.append(rand_res["hit_rate"])
-    opt_results.append(opt_res["hit_rate"])
+    rand_run_average = sum(size_rand_results)/10
+    print(f"RANDOM cache size: {size}, results: {rand_run_average}")
+
+    opt_run_average = sum(size_opt_results)/10
+    print(f"OPTIMAL cache size: {size}, results: {opt_run_average}")
+
+    rand_results.append(rand_run_average)
+    opt_results.append(opt_run_average)
 
   plot_results(rand_results, opt_results, cache_size)
