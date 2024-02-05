@@ -9,4 +9,6 @@ Comparing cache algorithms
 
 ## Results
 Cache algorithms comparison
+
+
 ![results](https://github.com/omriAR1/cacheComparison/blob/main/results.png?raw=true)
